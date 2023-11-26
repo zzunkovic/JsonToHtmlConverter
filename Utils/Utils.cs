@@ -1,4 +1,5 @@
-﻿using JsonToHtmlConverter.Models;
+﻿using System.Text;
+using JsonToHtmlConverter.Models;
 using JsonToHtmlConverter.Models.Tags;
 using Newtonsoft.Json.Linq;
 
@@ -49,13 +50,13 @@ namespace JsonToHtmlConverter.Utils
                 JArray linkArray = jObject["link"] as JArray;
                 foreach (JObject linkObject in linkArray)
                 {
+                    SelfClosingTag tag = new SelfClosingTag();
+                    tag.TagName = "link";
                     foreach (JProperty property in linkObject.Properties())
                     {
-                        SelfClosingTag tag = new SelfClosingTag();
-                        tag.TagName = "link";
                         tag.Attributes.Add(new TagAttribute { Name = property.Name, Value = (string)property.Value });
-                        tagList.Add(tag);
                     }
+                    tagList.Add(tag);
 
                 }
 
@@ -158,6 +159,136 @@ namespace JsonToHtmlConverter.Utils
 
         }
 
+        public static StringBuilder GenerateTag(Tag tag, int numberOfNestings)
+        {
+            StringBuilder tagStringBuilder = new StringBuilder();
+
+            int numOfNests = numberOfNestings;
+
+            /*
+            ////////////////////////
+            CREATE ATTRIBUTES
+            /////////////////////////
+            */
+
+            //build attribute string
+            string attributeString = "";
+
+            //loop through attributes
+            foreach (TagAttribute att in tag.Attributes)
+            {
+
+                attributeString += $"{att.Name}=\"{att.Value}\" ";
+            }
+
+            //check if style list is not empty
+            if (tag.Styles.Count != 0)
+            {
+
+                //create style string
+                string styleString = "style=\"";
+                foreach (Style style in tag.Styles)
+                {
+                    styleString += $"{style.StyleName}:{style.StyleValue};";
+                }
+
+                //close the style attribute and add to attribute string
+                styleString += "\"";
+                attributeString += styleString;
+            }
+
+
+
+            /*
+            ////////////////////////
+            CREATE TAGS
+            /////////////////////////
+            */
+
+
+            if (tag is SelfClosingTag)
+            {
+                tagStringBuilder.Append($"<{tag.TagName} {attributeString}>");
+            }
+            else if (tag is PairedTag pairedTag)
+            {
+
+                if (pairedTag.Content is string)
+                {
+
+                    tagStringBuilder.Append($"<{pairedTag.TagName} {attributeString}>{pairedTag.Content}</{pairedTag.TagName}>");
+                }
+                else if (pairedTag.Content is List<Tag> nestedContent)
+                {
+
+                    StringBuilder nestedContentStringBuilder = new StringBuilder();
+                    string indentationStart = string.Concat(Enumerable.Repeat("\t", numOfNests));
+                    string indentationEnd = string.Concat(Enumerable.Repeat("\t", numOfNests - 1));
+                    foreach (var nestedTag in nestedContent)
+                    {
+                        nestedContentStringBuilder.Append($"\n{indentationStart}" + GenerateTag(nestedTag, numOfNests + 1).ToString());
+                    }
+
+                    tagStringBuilder.Append($"<{pairedTag.TagName} {attributeString}>{nestedContentStringBuilder.ToString()}\n{indentationEnd}</{pairedTag.TagName}>");
+                }
+            }
+
+
+
+            return tagStringBuilder;
+        }
+
+
+        public static StringBuilder GenerateHtmlString(Html htmlObj)
+        {
+            StringBuilder htmlStringBuilder = new StringBuilder();
+            htmlStringBuilder.AppendLine($"<!DOCTYPE {htmlObj.Doctype}>");
+
+            //open html tag
+            htmlStringBuilder.AppendLine($"<html lang=\"{htmlObj.Language.ToLower()}\">");
+            htmlStringBuilder.AppendLine($"\t<head>");
+
+            //loop through list of tags in the head 
+
+            foreach (var tag in htmlObj.Head)
+            {
+                string attributeString = "";
+                if (tag is SelfClosingTag)
+                {
+                    //loop through attributes
+                    foreach (TagAttribute att in tag.Attributes)
+                    {
+
+                        attributeString += $"{att.Name}=\"{att.Value}\" ";
+                    }
+
+                    htmlStringBuilder.AppendLine($"\t\t<{tag.TagName} {attributeString} >");
+                }
+                else if (tag is PairedTag pairedTag)
+                {
+
+                    //loop through attributes
+                    foreach (TagAttribute att in tag.Attributes)
+                    {
+                        attributeString += $"{att.Name}=\"{att.Value}\" ";
+                    }
+
+                    htmlStringBuilder.AppendLine($"\t\t<{tag.TagName} {attributeString} >{pairedTag.Content}</{tag.TagName}>");
+
+                }
+
+            }
+            htmlStringBuilder.AppendLine($"\t</head>");
+
+            int numOfNests = 1;
+            htmlStringBuilder.AppendLine(GenerateTag(htmlObj.Body, numOfNests).ToString());
+
+
+            //close html tag
+            htmlStringBuilder.AppendLine($"</html>");
+            return htmlStringBuilder;
+
+        }
 
 
     }
