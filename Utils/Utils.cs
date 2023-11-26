@@ -17,23 +17,48 @@ namespace JsonToHtmlConverter.Utils
             {
                 SelfClosingTag tag = new SelfClosingTag();
                 tag.TagName = "meta";
-                tag.Attributes.Add(new TagAttribute { Name = property.Name, Value = (string)property.Value });
+
+                if (property.Name == "viewport")
+                {
+                    string viewportContentString = "";
+
+
+                    foreach (JProperty viewportProp in property.Value.Children<JProperty>())
+                    {
+                        viewportContentString += $"{viewportProp.Name}={viewportProp.Value},";
+                    }
+
+
+                    tag.Attributes.Add(new TagAttribute { Name = "name", Value = "viewport" });
+                    tag.Attributes.Add(new TagAttribute { Name = "content", Value = viewportContentString });
+                }
+                else
+                {
+
+                    tag.Attributes.Add(new TagAttribute { Name = property.Name, Value = (string)property.Value });
+
+                }
                 tagList.Add(tag);
 
             }
 
             //convert link
-
-            JArray linkArray = jObject["link"] as JArray;
-            foreach (JObject linkObject in linkArray)
+            if (jObject["link"] != null)
             {
-                foreach (JProperty property in linkObject.Properties())
+
+                JArray linkArray = jObject["link"] as JArray;
+                foreach (JObject linkObject in linkArray)
                 {
-                    SelfClosingTag tag = new SelfClosingTag();
-                    tag.TagName = "link";
-                    tag.Attributes.Add(new TagAttribute { Name = property.Name, Value = (string)property.Value });
-                    tagList.Add(tag);
+                    foreach (JProperty property in linkObject.Properties())
+                    {
+                        SelfClosingTag tag = new SelfClosingTag();
+                        tag.TagName = "link";
+                        tag.Attributes.Add(new TagAttribute { Name = property.Name, Value = (string)property.Value });
+                        tagList.Add(tag);
+                    }
+
                 }
+
 
             }
 
@@ -52,16 +77,16 @@ namespace JsonToHtmlConverter.Utils
             {
                 if (property.Name == "attributes")
                 {
-                    Console.WriteLine("entered atributes");
+
 
                     //store to attributes
                     foreach (var attributeProperty in property.Value.Children<JProperty>())
                     {
-                        Console.WriteLine("started attribute for loop");
+
 
                         if (attributeProperty.Value.Type == JTokenType.String)
                         {
-                            Console.WriteLine("Contained string");
+
 
                             //attribute contains a string
                             tagReference.Attributes.Add(new TagAttribute { Name = attributeProperty.Name, Value = (string)attributeProperty.Value });
@@ -85,7 +110,7 @@ namespace JsonToHtmlConverter.Utils
                     //store to tag if string, otherwise recurse
                     if (property.Value.Type == JTokenType.String)
                     {
-                        PairedTag stringTag = new PairedTag { TagName = property.Name, Content = property.Value };
+                        PairedTag stringTag = new PairedTag { TagName = property.Name, Content = property.Value.ToString() };
 
                         //store the tag
                         if (tagReference.Content == null)
