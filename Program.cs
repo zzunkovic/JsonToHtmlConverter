@@ -13,7 +13,7 @@ public static class Program
         JObject jsonObject = JObject.Parse(jsonString);
 
 
-        //Create instance of an object that holds the html related data from the JSON file
+        //Create instance of an object that holds the html related data received from the JSON file read above
         Html html = new Html();
 
         //Store Doctype if it exists
@@ -28,11 +28,15 @@ public static class Program
             html.Language = (string)jsonObject["language"]!;
         }
 
-        html.Head = Utils.ConvertJObjectHeadToListOfTags((JObject)jsonObject["head"]);
+        //Convert head to desired format and store inside the instance
+        html.Head = Utils.ConvertJObjectHeadToListOfTags((JObject)jsonObject["head"]!);
 
-        Utils.ConvertTag((JObject)jsonObject["body"], html.Body);
+
+        //Convert body data to desired format and store inside the instance
+        Utils.ConvertTag((JObject)jsonObject["body"]!, html.Body!);
 
 
+        //Convert html object to string and output to file
         string outputHtml = Utils.GenerateHtmlString(html).ToString();
         File.WriteAllText(@"D:\\VisualStudioProjects\\JsonToHtmlConverter\\output.html", outputHtml);
 
