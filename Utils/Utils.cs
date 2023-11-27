@@ -9,7 +9,7 @@ namespace JsonToHtmlConverter.Utils
     {
 
         /// <summary>
-        /// Converts the JOBject with the head data and converts it into a list of Tags.
+        /// Converts the JOBject with the head data into a list of Tags.
         /// </summary>
         /// <param name="jObject">JObject containing head data.</param>
         /// <returns>A list of html tags nested inside the head tag.</returns>
@@ -127,6 +127,26 @@ namespace JsonToHtmlConverter.Utils
                     }
 
                 }
+                else if (property.Name == "img" || property.Name == "input")
+                {
+                    SelfClosingTag selfClosingTag = new SelfClosingTag { TagName = property.Name };
+                    foreach (var attributeProperty in property.Value.Children<JProperty>())
+                    {
+                        selfClosingTag.Attributes.Add(new TagAttribute { Name = attributeProperty.Name, Value = attributeProperty.Value.ToString() });
+
+                    }
+                    if (tagReference.Content == null)
+                    {
+                        tagReference.Content = new List<Tag> { selfClosingTag };
+
+                    }
+                    else if (tagReference.Content is List<Tag> tagList)
+                    {
+                        tagList.Add(selfClosingTag);
+
+                    }
+
+                }
                 else
                 {
                     //if the property contains a string it means it is not nested, in that case just store it in the tag list. Otherwise it is a nested tag
@@ -150,7 +170,7 @@ namespace JsonToHtmlConverter.Utils
                     else
                     {
 
-                        //Also check before that if it is a selfclosing type like img, then just store it in the list
+
                         //If the tag is nested,create a new tag in the current tags list and pass the inserted tags
                         //reference and the corresponding JObject to the ConvertTag function (recursion)
 
@@ -241,7 +261,7 @@ namespace JsonToHtmlConverter.Utils
 
             if (tag is SelfClosingTag)
             {
-                tagStringBuilder.Append($"<{tag.TagName} {attributeString}>");
+                tagStringBuilder.Append($"<{tag.TagName} {attributeString}/>");
             }
             else if (tag is PairedTag pairedTag)
             {

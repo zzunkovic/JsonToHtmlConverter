@@ -8,8 +8,34 @@ public static class Program
 
     public static void Main(string[] args)
     {
+
+        //Reading and validating user input
+
+        string filename = "";
+
+        while (!File.Exists($"./{filename}"))
+        {
+            Console.WriteLine("Please provide the complete filename of the JSON file you want to convert.");
+            filename = Console.ReadLine();
+
+            if (!File.Exists(filename))
+            {
+                Console.WriteLine($"{filename} does not exist in this folder, please try again");
+            }
+            else if (!filename.Contains(".json"))
+            {
+                Console.WriteLine("Filename must contain a .json extension");
+                filename = "invalid";
+            }
+
+        }
+
+
+        ////////////////////////////
+        /// PROVIDE ABSOLUTE PATH TO INPUT FILE HERE IF RUNNING FROM VS (in solution explorer right click on file, copy full path) , ALSO COMMENT OUT ALL THE CODE ABOVE THIS COMMENT IN Main
+        ///////////////////////////
         //Convert JSON to JObject
-        string jsonString = File.ReadAllText(@"D:\\VisualStudioProjects\\JsonToHtmlConverter\\helloWorld.json");
+        string jsonString = File.ReadAllText($"./{filename}");
         JObject jsonObject = JObject.Parse(jsonString);
 
 
@@ -38,7 +64,17 @@ public static class Program
 
         //Convert html object to string and output to file
         string outputHtml = Utils.GenerateHtmlString(html).ToString();
-        File.WriteAllText(@"D:\\VisualStudioProjects\\JsonToHtmlConverter\\output.html", outputHtml);
+
+
+        ////////////////////////////
+        /// PROVIDE ABSOLUTE PATH TO OUTPUT FILE HERE IF RUNNING FROM VS
+        ///////////////////////////
+
+        File.WriteAllText("./output.html", outputHtml);
+
+        Console.WriteLine("File converted, press Enter to exit");
+        Console.Read();
+
 
     }
 
