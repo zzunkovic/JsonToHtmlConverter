@@ -11,7 +11,7 @@ public static class Program
 
         //Reading and validating user input
 
-        string? filename;
+        string filename;
         bool inputIsValid = false;
 
 
