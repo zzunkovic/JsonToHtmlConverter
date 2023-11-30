@@ -42,8 +42,10 @@ namespace JsonToHtmlConverter.Utils
                     }
                     else
                     {
-
-                        tag.Attributes!.Add(new TagAttribute { Name = property.Name, Value = (string)property.Value });
+                        if (property.Value.Type == JTokenType.String)
+                        {
+                            tag.Attributes!.Add(new TagAttribute { Name = property.Name, Value = (string)property.Value });
+                        }
 
                     }
                     tagList.Add(tag);
@@ -65,7 +67,13 @@ namespace JsonToHtmlConverter.Utils
                     tag.TagName = "link";
                     foreach (JProperty property in linkObject.Properties())
                     {
-                        tag.Attributes!.Add(new TagAttribute { Name = property.Name, Value = (string)property.Value });
+                        if (property.Value.Type == JTokenType.String)
+                        {
+
+                            tag.Attributes!.Add(new TagAttribute { Name = property.Name, Value = (string)property.Value });
+
+                        }
+
                     }
                     tagList.Add(tag);
 
@@ -84,8 +92,6 @@ namespace JsonToHtmlConverter.Utils
 
 
 
-
-
         /// <summary>
         /// Converts the JObject with tag data into a Tag object. The method is called recursively if it detects a nested tag.
         /// </summary>
@@ -101,7 +107,7 @@ namespace JsonToHtmlConverter.Utils
                 {
 
 
-                    //loop through all attributes
+
                     foreach (var attributeProperty in property.Value.Children<JProperty>())
                     {
 
@@ -109,8 +115,6 @@ namespace JsonToHtmlConverter.Utils
                         if (attributeProperty.Value.Type == JTokenType.String)
                         {
 
-
-                            //if attribute contains a string 
                             tagReference.Attributes!.Add(new TagAttribute { Name = attributeProperty.Name, Value = (string)attributeProperty.Value });
                         }
                         else
@@ -118,7 +122,13 @@ namespace JsonToHtmlConverter.Utils
                             //attribute contains another object which makes it a style attribute, in this case save it to the styles list
                             foreach (var styleProp in attributeProperty.Value.Children<JProperty>())
                             {
-                                tagReference.Styles.Add(new Style { StyleName = styleProp.Name, StyleValue = (string)styleProp.Value });
+
+                                if (styleProp.Value.Type == JTokenType.String)
+                                {
+
+                                    tagReference.Styles.Add(new Style { StyleName = styleProp.Name, StyleValue = (string)styleProp.Value });
+
+                                }
                             }
 
                         }
@@ -203,9 +213,6 @@ namespace JsonToHtmlConverter.Utils
         }
 
 
-
-
-
         /// <summary>
         /// Converts a Tag object into a string
         /// </summary>
@@ -227,14 +234,14 @@ namespace JsonToHtmlConverter.Utils
             //build attribute string
             string attributeString = "";
 
-            //loop through attributes
+
             foreach (TagAttribute att in tag.Attributes!)
             {
 
                 attributeString += $"{att.Name}=\"{att.Value}\" ";
             }
 
-            //check if style list is not empty
+
             if (tag.Styles.Count != 0)
             {
 
@@ -245,7 +252,7 @@ namespace JsonToHtmlConverter.Utils
                     styleString += $"{style.StyleName}:{style.StyleValue};";
                 }
 
-                //close the style attribute and add to attribute string
+
                 styleString += "\"";
                 attributeString += styleString;
             }
@@ -306,18 +313,18 @@ namespace JsonToHtmlConverter.Utils
             StringBuilder htmlStringBuilder = new StringBuilder();
             htmlStringBuilder.AppendLine($"<!DOCTYPE {htmlObj.Doctype}>");
 
-            //open html tag
+
             htmlStringBuilder.AppendLine($"<html lang=\"{htmlObj.Language.ToLower()}\">");
             htmlStringBuilder.AppendLine($"\t<head>");
 
-            //loop through list of tags in the head 
+
 
             foreach (var tag in htmlObj.Head!)
             {
                 string attributeString = "";
                 if (tag is SelfClosingTag)
                 {
-                    //loop through attributes
+
                     foreach (TagAttribute att in tag.Attributes!)
                     {
 
@@ -329,7 +336,7 @@ namespace JsonToHtmlConverter.Utils
                 else if (tag is PairedTag pairedTag)
                 {
 
-                    //loop through attributes
+
                     foreach (TagAttribute att in tag.Attributes!)
                     {
                         attributeString += $"{att.Name}=\"{att.Value}\" ";
@@ -346,7 +353,7 @@ namespace JsonToHtmlConverter.Utils
             htmlStringBuilder.AppendLine(GenerateTag(htmlObj.Body!, numOfNests).ToString());
 
 
-            //close html tag
+
             htmlStringBuilder.AppendLine($"</html>");
             return htmlStringBuilder;
 

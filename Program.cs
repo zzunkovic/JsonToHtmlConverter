@@ -11,24 +11,37 @@ public static class Program
 
         //Reading and validating user input
 
-        string filename = "";
+        string? filename;
+        bool inputIsValid = false;
 
-        while (!File.Exists($"./{filename}"))
+
+        do
         {
+
             Console.WriteLine("Please provide the complete filename of the JSON file you want to convert.");
             filename = Console.ReadLine();
 
-            if (!File.Exists(filename))
+            if (string.IsNullOrWhiteSpace(filename))
             {
-                Console.WriteLine($"{filename} does not exist in this folder, please try again");
+                Console.WriteLine($"Filename cannot be empty, please provide a valid filename ");
             }
-            else if (!filename.Contains(".json"))
+            else if (!filename.EndsWith(".json"))
             {
-                Console.WriteLine("Filename must contain a .json extension");
-                filename = "invalid";
+                Console.WriteLine($"Filename must end with a .json extension, please provide a valid filename ");
             }
 
-        }
+            else if (!File.Exists($"./{filename}"))
+            {
+                Console.WriteLine($"File does not exist, please try again ");
+
+            }
+            else
+            {
+                inputIsValid = true;
+            }
+
+        } while (!inputIsValid);
+
 
 
         ////////////////////////////
@@ -43,13 +56,13 @@ public static class Program
         Html html = new Html();
 
         //Store Doctype if it exists
-        if (jsonObject["doctype"] != null)
+        if (jsonObject["doctype"] != null && jsonObject["doctype"].Type == JTokenType.String)
         {
             html.Doctype = (string)jsonObject["doctype"]!;
         }
 
         //Store Language if it exists
-        if (jsonObject["language"] != null)
+        if (jsonObject["language"] != null && jsonObject["language"].Type == JTokenType.String)
         {
             html.Language = (string)jsonObject["language"]!;
         }
